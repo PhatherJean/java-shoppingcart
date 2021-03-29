@@ -186,4 +186,11 @@ public class UserServiceImpl
     {
         userrepos.deleteAll();
     }
+
+    @Override
+    public User findUserByName(String context)
+    {
+        return userrepos.findByUsername(context);
+
+    }
 }
