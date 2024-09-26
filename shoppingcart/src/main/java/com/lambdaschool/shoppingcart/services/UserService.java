@@ -79,4 +79,8 @@ public interface UserService
      * Deletes all record and their associated records from the database
      */
     public void deleteAll();
+
+    User findUserByName(String context);
+
+
 }

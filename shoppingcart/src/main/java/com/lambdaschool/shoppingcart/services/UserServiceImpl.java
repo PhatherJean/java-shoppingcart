@@ -34,11 +34,21 @@ public class UserServiceImpl
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    HelperFunctions helperFunctions;
+
     public User findUserById(long id) throws
                                       ResourceNotFoundException
     {
-        return userrepos.findById(id)
+        User currentUser = userrepos.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User id " + id + " not found!"));
+        if (helperFunctions.isAuthorizeToMakeChange(currentUser.getUsername()))
+        {
+            return currentUser;
+        } else
+        {
+            throw new ResourceNotFoundException("This user is not authorize to make change");
+        }
     }
 
     @Override
@@ -101,7 +111,7 @@ public class UserServiceImpl
 
         newUser.setUsername(user.getUsername()
             .toLowerCase());
-        newUser.setPassword(user.getPassword());
+        newUser.setPasswordNoEncrypt(user.getPassword());
         newUser.setPrimaryemail(user.getPrimaryemail()
             .toLowerCase());
 
@@ -132,45 +142,41 @@ public class UserServiceImpl
         }
 
         User currentUser = findUserById(id);
-
-        if (user.getUsername() != null)
+        if(helperFunctions.isAuthorizeToMakeChange(currentUser.getUsername()))
         {
-            currentUser.setUsername(user.getUsername()
-                .toLowerCase());
-        }
 
-        if (user.getPassword() != null)
-        {
-            currentUser.setPassword(user.getPassword());
-        }
+            if (user.getUsername() != null) {
+                currentUser.setUsername(user.getUsername()
+                        .toLowerCase());
+            }
 
-        if (user.getPrimaryemail() != null)
-        {
-            currentUser.setPrimaryemail(user.getPrimaryemail()
-                .toLowerCase());
-        }
+            if (user.getPassword() != null) {
+                currentUser.setPasswordNoEncrypt(user.getPassword());
+            }
 
-        if (user.getComments() != null)
-        {
-            currentUser.setComments(user.getComments());
-        }
+            if (user.getPrimaryemail() != null) {
+                currentUser.setPrimaryemail(user.getPrimaryemail()
+                        .toLowerCase());
+            }
 
-        if (user.getRoles()
-            .size() > 0)
-        {
-            currentUser.getRoles()
-                .clear();
-            for (UserRoles ur : user.getRoles())
-            {
-                Role addRole = roleService.findRoleById(ur.getRole()
-                    .getRoleid());
+            if (user.getComments() != null) {
+                currentUser.setComments(user.getComments());
+            }
 
+            if (user.getRoles()
+                    .size() > 0) {
                 currentUser.getRoles()
-                    .add(new UserRoles(currentUser,
-                        addRole));
+                        .clear();
+                for (UserRoles ur : user.getRoles()) {
+                    Role addRole = roleService.findRoleById(ur.getRole()
+                            .getRoleid());
+
+                    currentUser.getRoles()
+                            .add(new UserRoles(currentUser,
+                                    addRole));
+                }
             }
         }
-
         return userrepos.save(currentUser);
     }
 
@@ -179,5 +185,12 @@ public class UserServiceImpl
     public void deleteAll()
     {
         userrepos.deleteAll();
+    }
+
+    @Override
+    public User findUserByName(String context)
+    {
+        return userrepos.findByUsername(context);
+
     }
 }
